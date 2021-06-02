@@ -28,7 +28,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   TextEditingController _hostIpController =
-      TextEditingController(text: "192.168.100.81");
+      TextEditingController(text: "10.10.1.144");
 
   TextEditingController _hostPortController =
       TextEditingController(text: "53000");
@@ -48,6 +48,57 @@ class _MyHomePageState extends State<MyHomePage>
     super.dispose();
   }
 
+  List _actions = [
+    "SALE",
+    "REFUND",
+    "VOID",
+    "PRINT_RECEIPT",
+    "ISSUE_GIFT",
+    "INQUIRE_GIFT",
+    "UPDATE_RECEIPT_HEADER",
+    "CLOSE_BATCH"
+  ];
+
+  List _tenderTypes = ["CREDIT", "DEBIT", "GIFT", "EBT"];
+
+  String? _currentAction;
+  String? _currentTenderType;
+  Map? _currentExtData;
+  TextEditingController _amountController = TextEditingController();
+  TextEditingController _refNumController = TextEditingController();
+  TextEditingController _paymentTypeController = TextEditingController();
+  TextEditingController _headerController = TextEditingController();
+  bool _headersEnabled = false;
+  List _headerList = [];
+
+  _sendCommand() async {
+    var amount = "0";
+    if (_amountController.text != "") {
+      amount = _amountController.text;
+    }
+    _currentExtData = {
+      "amount": int.parse(amount),
+      "refNum": _refNumController.text,
+      "paymentType": _paymentTypeController.text,
+      "enabled": _headersEnabled,
+      "headers": [_headerController.text]
+    };
+    await SocketBroker(
+            host: _hostIpController.text,
+            port: int.parse(_hostPortController.text))
+        .connect(onError: (err) {
+      print(err);
+    }, whenConnected: (socket) async {
+      socket.writeJson(
+        {
+          "action": _currentAction,
+          "tenderType": _currentTenderType,
+          "extData": _currentExtData
+        },
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,90 +107,161 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       body: Column(
         children: [
-          Expanded(
-            flex: 2,
-            child: Card(
-              color: _isHostConfigured ? Colors.lightGreen : Colors.red,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Connection Status: ",
-                      style: TextStyle(
-                        fontSize: 24,
-                      ),
+          Card(
+            color: _isHostConfigured ? Colors.lightGreen : Colors.red,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Connection Status: ",
+                    style: TextStyle(
+                      fontSize: 24,
                     ),
-                    _isHostConfigured
-                        ? const Icon(
-                            Icons.check_circle_outline,
-                            size: 32,
-                          )
-                        : const Icon(
-                            Icons.cancel_outlined,
-                            size: 32,
-                          ),
-                  ],
-                ),
+                  ),
+                  _isHostConfigured
+                      ? const Icon(
+                          Icons.check_circle_outline,
+                          size: 32,
+                        )
+                      : const Icon(
+                          Icons.cancel_outlined,
+                          size: 32,
+                        ),
+                ],
               ),
             ),
           ),
-          Expanded(
-            flex: 22,
-            child: GridView.count(
-              crossAxisCount: 10,
-              padding: EdgeInsets.all(16),
-              crossAxisSpacing: 6,
-              children: [
-                MaterialButton(
-                  color: Colors.tealAccent,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Action: "),
+              DropdownButton(
+                value: _currentAction,
+                items: _actions.map((action) {
+                  return new DropdownMenuItem<String>(
+                    value: action,
+                    child: new Text(action,
+                        style: new TextStyle(color: Colors.black)),
+                  );
+                }).toList(),
+                onChanged: (String? val) {
+                  setState(() {
+                    _currentAction = val;
+                  });
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Tender Type: "),
+              DropdownButton(
+                value: _currentTenderType,
+                items: _tenderTypes.map((tenderType) {
+                  return new DropdownMenuItem<String>(
+                    value: tenderType,
+                    child: new Text(tenderType,
+                        style: new TextStyle(color: Colors.black)),
+                  );
+                }).toList(),
+                onChanged: (String? val) {
+                  setState(() {
+                    _currentTenderType = val;
+                  });
+                },
+              ),
+            ],
+          ),
+          SizedBox(
+              child: TextField(
+                controller: _amountController,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                ),
+              ),
+              width: 200),
+          SizedBox(
+              child: TextField(
+                controller: _refNumController,
+                decoration: InputDecoration(
+                  labelText: 'Ref Num',
+                ),
+              ),
+              width: 200),
+          SizedBox(
+              child: TextField(
+                controller: _paymentTypeController,
+                decoration: InputDecoration(
+                  labelText: 'Payment Type',
+                ),
+              ),
+              width: 200),
+          SizedBox(
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text("Headers Enabled"),
+                    Switch(
+                        onChanged: (val) {
+                          setState(() {
+                            _headersEnabled = val;
+                          });
+                        },
+                        value: _headersEnabled)
+                  ]),
+              width: 200),
+          SizedBox(
+              child: TextField(
+                controller: _headerController,
+                decoration: InputDecoration(
+                  labelText: 'Headers',
+                ),
+              ),
+              width: 200),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: MaterialButton(
+                  color: Colors.green[300],
                   onPressed: () async {
-                    var pinPadSocket = SocketBroker.sockets.firstWhere(
-                      (element) => element.host == _hostIpController.text,
-                    );
-
-                    await pinPadSocket.connect(onError: (err) {
-                      print(err);
-                      setState(() {
-                        _isHostConfigured = false;
-                      });
-                    }, whenConnected: (socket) async {
-                      socket.writeJson({"": "asdf"});
-                    });
+                    await _sendCommand();
                   },
                   child: Text(
-                    'Sale',
+                    'Send Command',
                     style: TextStyle(
                       fontSize: 24,
                     ),
                   ),
                 ),
-                MaterialButton(
-                  color: Colors.tealAccent,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: MaterialButton(
+                  color: Colors.red[300],
                   onPressed: () async {
-                    var pinPadSocket = SocketBroker.sockets.firstWhere(
-                      (element) => element.host == _hostIpController.text,
-                    );
-
-                    await pinPadSocket.connect(onError: (err) {
+                    await SocketBroker(
+                            host: _hostIpController.text,
+                            port: int.parse(_hostPortController.text))
+                        .connect(onError: (err) {
                       print(err);
-                      setState(() {
-                        _isHostConfigured = false;
-                      });
                     }, whenConnected: (socket) async {
-                      socket.writeJson({"": "asdf"});
+                      socket.writeJson({"action": "CANCEL"});
                     });
                   },
                   child: Text(
-                    'Refund',
+                    'Cancel',
                     style: TextStyle(
                       fontSize: 24,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -169,13 +291,14 @@ class _MyHomePageState extends State<MyHomePage>
                   TextButton(
                     child: Text('Save'),
                     onPressed: () async {
-                      SocketBroker.sockets.add(
-                        SocketObject(
-                          host: _hostIpController.text,
-                          port: int.parse(_hostPortController.text),
-                        ),
-                      );
-
+                      await SocketBroker(
+                              host: _hostIpController.text,
+                              port: int.parse(_hostPortController.text))
+                          .connect(onError: (err) {
+                        print(err);
+                      }, whenConnected: (socket) async {
+                        socket.writeJson({"action": ""});
+                      });
                       setState(() {
                         _isHostConfigured = true;
                       });
