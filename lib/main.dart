@@ -56,7 +56,8 @@ class _MyHomePageState extends State<MyHomePage>
     "ISSUE_GIFT",
     "INQUIRE_GIFT",
     "UPDATE_RECEIPT_HEADER",
-    "CLOSE_BATCH"
+    "CLOSE_BATCH",
+    "TIP"
   ];
 
   List _tenderTypes = ["CREDIT", "DEBIT", "GIFT", "EBT"];
@@ -263,6 +264,28 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ],
           ),
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: MaterialButton(
+          //     color: Colors.blue[300],
+          //     onPressed: () async {
+          //       await SocketBroker(
+          //               host: _hostIpController.text,
+          //               port: int.parse(_hostPortController.text))
+          //           .connect(onError: (err) {
+          //         print(err);
+          //       }, whenConnected: (socket) async {
+          //         socket.writeJson({"action": "TIP"});
+          //       });
+          //     },
+          //     child: Text(
+          //       'Show Tip',
+          //       style: TextStyle(
+          //         fontSize: 24,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
