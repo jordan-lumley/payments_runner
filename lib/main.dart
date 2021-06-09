@@ -70,6 +70,7 @@ class _MyHomePageState extends State<MyHomePage>
   TextEditingController _paymentTypeController = TextEditingController();
   TextEditingController _headerController = TextEditingController();
   bool _headersEnabled = false;
+  bool _tipEnabled = false;
   List _headerList = [];
 
   _sendCommand() async {
@@ -82,7 +83,8 @@ class _MyHomePageState extends State<MyHomePage>
       "refNum": _refNumController.text,
       "paymentType": _paymentTypeController.text,
       "enabled": _headersEnabled,
-      "headers": [_headerController.text]
+      "headers": [_headerController.text],
+      "tipEnabled": _tipEnabled
     };
     await SocketBroker(
             host: _hostIpController.text,
@@ -221,6 +223,20 @@ class _MyHomePageState extends State<MyHomePage>
                   labelText: 'Headers',
                 ),
               ),
+              width: 200),
+          SizedBox(
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text("Tip Enabled"),
+                    Switch(
+                        onChanged: (val) {
+                          setState(() {
+                            _tipEnabled = val;
+                          });
+                        },
+                        value: _tipEnabled)
+                  ]),
               width: 200),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
