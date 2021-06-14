@@ -62,15 +62,27 @@ class _MyHomePageState extends State<MyHomePage>
 
   List _tenderTypes = ["CREDIT", "DEBIT", "GIFT", "EBT"];
 
+  List _cashDiscountModes = [
+    {"title": "PERCENT", "value": "0"},
+    {"title": "FLAT", "value": "1"}
+  ];
+
   String? _currentAction;
   String? _currentTenderType;
+  String? _currentCashDiscountMode;
+
   Map? _currentExtData;
+
   TextEditingController _amountController = TextEditingController();
   TextEditingController _refNumController = TextEditingController();
   TextEditingController _paymentTypeController = TextEditingController();
   TextEditingController _headerController = TextEditingController();
+  TextEditingController _cashDiscountAmountController = TextEditingController();
+
   bool _headersEnabled = false;
   bool _tipEnabled = false;
+  bool _cashDiscountEnabled = false;
+
   List _headerList = [];
 
   _sendCommand() async {
@@ -84,7 +96,10 @@ class _MyHomePageState extends State<MyHomePage>
       "paymentType": _paymentTypeController.text,
       "enabled": _headersEnabled,
       "headers": [_headerController.text],
-      "tipEnabled": _tipEnabled
+      "tipEnabled": _tipEnabled,
+      "cashDiscountEnabled": _cashDiscountEnabled,
+      "cashDiscountAmount": _cashDiscountAmountController.text,
+      "cashDiscountMode": _currentCashDiscountMode
     };
     await SocketBroker(
             host: _hostIpController.text,
@@ -238,6 +253,49 @@ class _MyHomePageState extends State<MyHomePage>
                         value: _tipEnabled)
                   ]),
               width: 200),
+          SizedBox(
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text("Cash Discount Enabled"),
+                    Switch(
+                        onChanged: (val) {
+                          setState(() {
+                            _cashDiscountEnabled = val;
+                          });
+                        },
+                        value: _cashDiscountEnabled)
+                  ]),
+              width: 250),
+          SizedBox(
+              child: TextField(
+                controller: _cashDiscountAmountController,
+                decoration: InputDecoration(
+                  labelText: 'Cash Discount Amount',
+                ),
+              ),
+              width: 200),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("CashDiscount Mode: "),
+              DropdownButton(
+                value: _currentCashDiscountMode,
+                items: _cashDiscountModes.map((cashDiscountMode) {
+                  return new DropdownMenuItem<String>(
+                    value: cashDiscountMode["value"],
+                    child: new Text(cashDiscountMode["title"],
+                        style: new TextStyle(color: Colors.black)),
+                  );
+                }).toList(),
+                onChanged: (String? val) {
+                  setState(() {
+                    _currentCashDiscountMode = val;
+                  });
+                },
+              ),
+            ],
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
